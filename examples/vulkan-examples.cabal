@@ -4,7 +4,7 @@ cabal-version: 2.2
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2bf662d9405388b97d0c1fd5b08eab1a434e7bf5d32c679b1c0b0fe323da3b8a
+-- hash: e84d1e181707def9a3ca53e0bad99cec11fd4b72adedb2888d321bcc2af9b83c
 
 name:           vulkan-examples
 version:        0.1.0.0
@@ -164,6 +164,7 @@ executable rays
   main-is: Main.hs
   other-modules:
       Cache
+      DescriptorSet
       Frame
       Framebuffer
       Init
