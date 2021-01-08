@@ -33,6 +33,8 @@ import Data.Typeable
   ( Typeable )
 import Data.Word
   ( Word32 )
+import GHC.Exts
+  ( Int(I#), dataToTag# )
 
 -- bytestring
 import Data.ByteString
@@ -78,6 +80,7 @@ data InstanceRequirement where
        , instanceExtensionMinVersion :: Word32
        }
     -> InstanceRequirement
+  deriving stock ( Show, Eq, Ord )
 
 ----------------------------------------------------------------
 -- Device Requirements
@@ -113,6 +116,37 @@ data DeviceRequirement where
        , deviceExtensionMinVersion :: Word32
        }
     -> DeviceRequirement
+
+instance Show DeviceRequirement where
+  show ( RequireDeviceVersion { version } ) = "RequireDeviceVersion { version = " <> show version <> " }"
+  show ( RequireDeviceFeature { featureName } ) = "RequireDeviceFeature { featureName = " <> show featureName <> " }"
+  show ( RequireDeviceProperty { propertyName } ) = "RequireDeviceProperty { propertyName = " <> show propertyName <> " }"
+  show ( RequireDeviceExtension { deviceExtensionLayerName, deviceExtensionName, deviceExtensionMinVersion } ) =
+    "RequireDeviceExtension\n" <>
+    "  { deviceExtensionLayerName = " <> show deviceExtensionLayerName <> "\n" <>
+    "  , deviceExtensionName = " <> show deviceExtensionName <> "\n" <>
+    "  , deviceExtensionMinVersion = " <> show deviceExtensionMinVersion <> "\n" <>
+    "  }"
+
+instance Eq DeviceRequirement where
+  req1 == req2 = req1 `compare` req2 == EQ
+
+instance Ord DeviceRequirement where
+  req1 `compare` req2 = case I# ( dataToTag# req1 ) `compare` I# ( dataToTag# req2 ) of
+    EQ
+      | RequireDeviceVersion v1 <- req1
+      , RequireDeviceVersion v2 <- req2
+      -> v1 `compare` v2
+      | RequireDeviceFeature { featureName = feat1 } <- req1
+      , RequireDeviceFeature { featureName = feat2 } <- req2
+      -> feat1 `compare` feat2
+      | RequireDeviceProperty { propertyName = prop1 } <- req1
+      , RequireDeviceProperty { propertyName = prop2 } <- req2
+      -> prop1 `compare` prop2
+      | RequireDeviceExtension mbLay1 name1 ver1 <- req1
+      , RequireDeviceExtension mbLay2 name2 ver2 <- req2
+      -> ( mbLay1, name1, ver1 ) `compare` ( mbLay2, name2, ver2 )
+    cmp -> cmp
 
 -- | Singleton for a Vulkan structure that can appear in 'PhysicalDeviceFeatures2'.
 --
